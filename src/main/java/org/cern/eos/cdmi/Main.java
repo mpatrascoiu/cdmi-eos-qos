@@ -23,10 +23,8 @@
 
 package org.cern.eos.cdmi;
 
-import org.cern.eos.cdmi.util.PluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.log4j.BasicConfigurator;
 
 public class Main {
 

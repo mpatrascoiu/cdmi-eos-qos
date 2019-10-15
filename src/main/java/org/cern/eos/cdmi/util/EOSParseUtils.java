@@ -104,6 +104,19 @@ public class EOSParseUtils {
   }
 
   /**
+   * Returns a string representation of a capability type.
+   */
+  public static String capabilityTypeToString(BackendCapability.CapabilityType type) {
+    if (type == CONTAINER) {
+      return "container";
+    } else if (type == DATAOBJECT) {
+      return "dataobject";
+    }
+
+    return null;
+  }
+
+  /**
    * Transforms a list of allowed transitions into a JSON array of CDMI transition URIs.
    */
   private static JSONArray capabilitiesAllowed(List<String> allowedList,
@@ -115,18 +128,5 @@ public class EOSParseUtils {
     }
 
     return capAllowed;
-  }
-
-  /**
-   * Returns a string representation of a capability type.
-   */
-  public static String capabilityTypeToString(BackendCapability.CapabilityType type) {
-    if (type == CONTAINER) {
-      return "container";
-    } else if (type == DATAOBJECT) {
-      return "dataobject";
-    }
-
-    return null;
   }
 }

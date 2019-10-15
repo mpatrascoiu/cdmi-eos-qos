@@ -48,21 +48,22 @@ public class JsonUtils {
   public static JSONObject responseToJson(HttpResponse response) throws IOException, JSONException {
     String cmdResponse = EntityUtils.toString(response.getEntity());
     String cmdOut = EOSParseUtils.extractCmdOutput(cmdResponse);
-    LOG.debug("Converting response output to JSON: {}", cmdOut);
+    LOG.debug("Attempting response conversion as JSON object: {}", cmdOut);
 
     JSONObject jsonObject;
 
     try {
       jsonObject = new JSONObject(cmdOut);
     } catch (JSONException objectE) {
-      LOG.warn("Failed conversion from out to JSON Object");
+      LOG.debug("Failed conversion to JSON object.");
 
       try {
+        LOG.debug("Attempting response conversion as JSON Array: {}", cmdOut);
         JSONArray jsonArray = new JSONArray(cmdOut);
         jsonObject = new JSONObject();
         jsonObject.put("name", jsonArray);
       } catch (JSONException arrayE) {
-        LOG.warn("Failed conversion from out to JSON Array");
+        LOG.error("Failed conversion from out to JSON Object or Array: {}", cmdOut);
         throw objectE;
       }
     }

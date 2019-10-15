@@ -63,7 +63,7 @@ public class HttpUtils {
    */
   private static JSONObject execute(HttpUriRequest request) throws BackEndException {
     try {
-      LOG.debug("HTTP Request: {}", request);
+      LOG.info("HTTP Request: {}", request);
       HttpResponse response = client.execute(request);
 
       if (statusOk(response)) {
