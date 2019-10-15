@@ -154,6 +154,14 @@ public class EOSParseUtils {
   }
 
   /**
+   * Returns the QoS class extracted from the given capability URI.
+   */
+  public static String qosClassFromCapUri(String capUri) {
+    String[] parts = capUri.trim().split("/");
+    return parts[parts.length - 1];
+  }
+
+  /**
    * Returns a string representation of a capability type.
    */
   public static String capabilityTypeToString(BackendCapability.CapabilityType type) {

@@ -38,9 +38,9 @@ public class Main {
       LOG.info(e.getMessage());
     }
 
-    if (args.length >= 1) {
+    if (args.length >= 2) {
       try {
-        eos.getCurrentStatus(args[0]);
+        eos.updateCdmiObject(args[0], "/cdmi_capabilities/dataobject/" + args[1]);
       } catch (Exception e) {
         LOG.info(e.getMessage());
       }

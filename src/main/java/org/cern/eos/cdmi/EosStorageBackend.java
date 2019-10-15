@@ -131,7 +131,21 @@ public class EosStorageBackend implements StorageBackend {
    */
   @Override
   public void updateCdmiObject(String path, String targetCapabilityUri) throws BackEndException {
+    String qosClass = EOSParseUtils.qosClassFromCapUri(targetCapabilityUri);
+    String url = "";
 
+    LOG.debug("Updating CDMI capabilities of: {} [target={}]", path, qosClass);
+
+    try {
+      url = buildProtoCommandUrl(ProtobufUtils.QoSSet(path, qosClass));
+      JSONObject response = HttpUtils.executeCommand(url);
+      LOG.info("QoS update of {} [target={}]: {}", path, qosClass, response);
+    } catch (UnsupportedEncodingException e) {
+      LOG.error("Error updating CDMI capabilities of {} -- {}", path, e.getMessage());
+      throw new BackEndException(
+          String.format("Failed updating CDMI capabilities of %s [target=%s] [url=%s] -- %s",
+              path, qosClass, url, e.getMessage()));
+    }
   }
 
   /**
