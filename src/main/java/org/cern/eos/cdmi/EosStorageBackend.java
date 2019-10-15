@@ -37,6 +37,9 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,10 +91,13 @@ public class EosStorageBackend implements StorageBackend {
   public List<BackendCapability> getCapabilities() throws BackEndException {
     final BackendCapability.CapabilityType[] types = new BackendCapability.CapabilityType[]{CONTAINER, DATAOBJECT};
     List<BackendCapability> backendCapabilities = new ArrayList<>();
-    String url = buildProtoCommandUrl(ProtobufUtils.QoSList());
-    LOG.debug("Fetching CDMI capabilities -- URL: {}", url);
+    String url = "";
+
+    LOG.debug("Fetching CDMI capabilities.");
 
     try {
+      url = buildProtoCommandUrl(ProtobufUtils.QoSList());
+
       JSONObject response = HttpUtils.executeCommand(url);
 
       for (String capability : JsonUtils.jsonArrayToStringList(response.getJSONArray("name"))) {
@@ -101,12 +107,12 @@ public class EosStorageBackend implements StorageBackend {
         for (BackendCapability.CapabilityType type : types) {
           BackendCapability backendCapability = EOSParseUtils.backendCapabilityFromJson(response, type);
           backendCapabilities.add(backendCapability);
-          LOG.debug("{} capability: {}", EOSParseUtils.capabilityTypeToString(type), backendCapability);
+          LOG.info("{} capability: {}", EOSParseUtils.capabilityTypeToString(type), backendCapability);
         }
       }
 
       return backendCapabilities;
-    } catch (JSONException | BackEndException e) {
+    } catch (JSONException | BackEndException | UnsupportedEncodingException e) {
       LOG.error("Error fetching CDMI capabilities -- {}", e.getMessage());
       throw new BackEndException(
         String.format("Failed command %s -- %s", url, e.getMessage()));
@@ -137,9 +143,10 @@ public class EosStorageBackend implements StorageBackend {
   }
 
   /**
-   * Return the EOS protobuf specific command URL containing the given opaque info
+   * Return the EOS protobuf specific command URL containing the given opaque info.
    */
-  private String buildProtoCommandUrl(String opaqueInfo) {
-    return eosServer + cmdPath + "?mgm.cmd.proto=" + opaqueInfo;
+  private String buildProtoCommandUrl(String opaqueInfo) throws UnsupportedEncodingException {
+    String encodedOpaque = URLEncoder.encode(opaqueInfo, StandardCharsets.UTF_8.toString());
+    return eosServer + cmdPath + "?mgm.cmd.proto=" + encodedOpaque;
   }
 }
