@@ -64,6 +64,23 @@ public class ProtobufUtils {
   }
 
   /**
+   * Returns the base64 encoded string of the Protobuf "qos get path" command.
+   */
+  public static String QoSGet(String path) {
+    QoSProto.IdentifierProto identifier = QoSProto.IdentifierProto.newBuilder()
+        .setPath(path)
+        .build();
+    QoSProto.GetProto qosGet = QoSProto.GetProto.newBuilder()
+        .setIdentifier(identifier)
+        .build();
+    QoSProto qos = QoSProto.newBuilder()
+        .setGet(qosGet)
+        .build();
+
+    return Base64Encode(PackageQoSRequest(qos));
+  }
+
+  /**
    * Package a QoS command proto object into a Request protobuf object.
    *
    * @param qos the QoS command to package

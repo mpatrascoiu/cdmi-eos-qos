@@ -31,13 +31,19 @@ public class Main {
   private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
   public static void main(String[] args) {
-    LOG.info("CWD=" + System.getProperty("user.dir"));
-
     EosStorageBackend eos = new EosStorageBackend();
     try {
       eos.getCapabilities();
     } catch (Exception e) {
       LOG.info(e.getMessage());
+    }
+
+    if (args.length >= 1) {
+      try {
+        eos.getCurrentStatus(args[0]);
+      } catch (Exception e) {
+        LOG.info(e.getMessage());
+      }
     }
   }
 }

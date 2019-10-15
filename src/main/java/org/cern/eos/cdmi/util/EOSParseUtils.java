@@ -124,6 +124,36 @@ public class EOSParseUtils {
   }
 
   /**
+   * Extract metadata information from a QoS description.
+   * The QoS description may be either for a class or for an entry.
+   *
+   * @param response the JSON response representing a QoS description
+   * @return metadata the metadata JSON object
+   */
+  public static Map<String, Object> metadataFromQoSJson(JSONObject response) {
+    Map<String, Object> metadata = new HashMap<>();
+    JSONObject jsonMetadata = response.getJSONObject("metadata");
+
+    Integer cdmiRedundancy = jsonMetadata.getInt("cdmi_data_redundancy_provided");
+    Integer cdmiLatency = jsonMetadata.getInt("cdmi_latency_provided");
+    String cdmiGeoPlacement = jsonMetadata.getString("cdmi_geographic_placement_provided");
+
+    metadata.put("cdmi_data_redundancy_provided", cdmiRedundancy);
+    metadata.put("cdmi_latency_provided", cdmiLatency);
+    metadata.put("cdmi_geographic_placement_provided", cdmiGeoPlacement);
+
+    return metadata;
+  }
+
+  /**
+   * Returns true if the given fileinfo JSON object describes a directory,
+   * false otherwise.
+   */
+  public static boolean fileinfoIsDirectory(JSONObject fileinfo) {
+    return fileinfo.has("treesize");
+  }
+
+  /**
    * Returns a string representation of a capability type.
    */
   public static String capabilityTypeToString(BackendCapability.CapabilityType type) {

@@ -43,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.indigo.cdmi.BackendCapability.CapabilityType.CONTAINER;
 import static org.indigo.cdmi.BackendCapability.CapabilityType.DATAOBJECT;
@@ -91,19 +92,21 @@ public class EosStorageBackend implements StorageBackend {
   public List<BackendCapability> getCapabilities() throws BackEndException {
     final BackendCapability.CapabilityType[] types = new BackendCapability.CapabilityType[]{CONTAINER, DATAOBJECT};
     List<BackendCapability> backendCapabilities = new ArrayList<>();
-    String url = "";
 
     LOG.debug("Fetching CDMI capabilities.");
+    String url = "";
 
     try {
+      // Perform "eos qos list" to retrieve all available QoS classes
       url = buildProtoCommandUrl(ProtobufUtils.QoSList());
-
       JSONObject response = HttpUtils.executeCommand(url);
 
+      // Retrieve capabilities for each QoS class
       for (String capability : JsonUtils.jsonArrayToStringList(response.getJSONArray("name"))) {
         url = buildProtoCommandUrl(ProtobufUtils.QoSListClass(capability));
         response = HttpUtils.executeCommand(url);
 
+        // Use same QoS class for Containers and Dataobjects
         for (BackendCapability.CapabilityType type : types) {
           BackendCapability backendCapability = EOSParseUtils.backendCapabilityFromJson(response, type);
           backendCapabilities.add(backendCapability);
@@ -139,7 +142,50 @@ public class EosStorageBackend implements StorageBackend {
    */
   @Override
   public CdmiObjectStatus getCurrentStatus(String path) throws BackEndException {
-    return null;
+    LOG.debug("Get current CDMI capabilities of: {}", path);
+    String url = "";
+
+    try {
+      // Perform fileinfo on path
+      url = buildFileinfoCommandUrl(path);
+      JSONObject fileinfo = HttpUtils.executeCommand(url);
+
+      if (EOSParseUtils.fileinfoIsDirectory(fileinfo)) {
+        throw new BackEndException("Is directory");
+      }
+
+      // Perform "qos get" on path
+      url = buildProtoCommandUrl(ProtobufUtils.QoSGet(path));
+      JSONObject qosGet = HttpUtils.executeCommand(url);
+
+      // Extract current_qos, target_qos and monitored metadata
+      final Map<String, Object> monitored = EOSParseUtils.metadataFromQoSJson(qosGet);
+      String currentClass = qosGet.getString("current_qos");
+      String currentCapUri = null;
+      String targetCapUri = null;
+
+      if (!currentClass.equals("null")) {
+        currentCapUri = "/cdmi_capabilities/dataobject/" + currentClass;
+      }
+
+      if (qosGet.has("target_qos")) {
+        targetCapUri = "/cdmi_capabilities/dataobject/" + qosGet.getString("target_qos");
+      }
+
+      CdmiObjectStatus status = new CdmiObjectStatus(monitored, currentCapUri, targetCapUri);
+      LOG.info("CDMI Capability of {}: {} {} -- {}", path, currentCapUri,
+          ((targetCapUri == null || targetCapUri.isEmpty()) ?
+              "[no transition]" :
+              "[transition to " + targetCapUri + "]"),
+          status);
+
+      return status;
+    } catch (UnsupportedEncodingException e) {
+      LOG.error("Error retrieving CDMI capabilities of {} -- {}", path, e.getMessage());
+      throw new BackEndException(
+          String.format("Failed retrieving CDMI capabilities of %s [url=%s] -- %s",
+              path, url, e.getMessage()));
+    }
   }
 
   /**
@@ -148,5 +194,13 @@ public class EosStorageBackend implements StorageBackend {
   private String buildProtoCommandUrl(String opaqueInfo) throws UnsupportedEncodingException {
     String encodedOpaque = URLEncoder.encode(opaqueInfo, StandardCharsets.UTF_8.toString());
     return eosServer + cmdPath + "?mgm.cmd.proto=" + encodedOpaque;
+  }
+
+  /**
+   * Return the EOS fileinfo specific command URL containing the given path.
+   */
+  private String buildFileinfoCommandUrl(String path) throws UnsupportedEncodingException {
+    String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+    return eosServer + cmdPath + "?mgm.cmd=fileinfo&mgm.path=" + encodedPath + "&mgm.format=json";
   }
 }
