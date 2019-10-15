@@ -1,4 +1,8 @@
 /target/
+/out/
+
+# Protobuf generated package
+src/main/java/org/cern/eos/cdmi/protobuf/generated/
 
 ## IntelliJ
 .idea

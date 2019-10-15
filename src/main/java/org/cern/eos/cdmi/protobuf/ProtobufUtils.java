@@ -23,8 +23,12 @@
 
 package org.cern.eos.cdmi.protobuf;
 
+import org.cern.eos.cdmi.protobuf.generated.Request.*;
+import org.cern.eos.cdmi.protobuf.generated.QoSCmd.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Base64;
 
 /**
  * Utility class to handle Protobuf command building and serialization.
@@ -37,16 +41,49 @@ public class ProtobufUtils {
    * Returns the base64 encoded string of the Protobuf "qos ls" command.
    */
   public static String QoSList() {
-    return "CAGiAQIKAPgBAQ==";
+    QoSProto.ListProto qosList = QoSProto.ListProto.newBuilder().build();
+    QoSProto qos = QoSProto.newBuilder()
+        .setList(qosList)
+        .build();
+
+    return Base64Encode(PackageQoSRequest(qos));
   }
 
+  /**
+   * Returns the base64 encoded string of the Protobuf "qos ls classname" command.
+   */
   public static String QoSListClass(String qosClassName) {
-    if (qosClassName.equals("disk_plain")) {
-      return "CAGiAQ4KDAoKZGlza19wbGFpbg==";
-    } else if (qosClassName.equals("disk_replica")) {
-      return "CAGiARAKDgoMZGlza19yZXBsaWNh";
-    }
+    QoSProto.ListProto qosList = QoSProto.ListProto.newBuilder()
+        .setClassname(qosClassName)
+        .build();
+    QoSProto qos = QoSProto.newBuilder()
+        .setList(qosList)
+        .build();
 
-    return null;
+    return Base64Encode(PackageQoSRequest(qos));
+  }
+
+  /**
+   * Package a QoS command proto object into a Request protobuf object.
+   *
+   * @param qos the QoS command to package
+   * @return the request protobuf object
+   */
+  private static RequestProto PackageQoSRequest(QoSProto qos) {
+    return RequestProto.newBuilder()
+        .setFormat(RequestProto.FormatType.JSON)
+        .setDontColor(true)
+        .setQos(qos)
+        .build();
+  }
+
+  /**
+   * Returns a base64 string encoding of a protobuf object.
+   */
+  private static String Base64Encode(RequestProto request) {
+    String base64 = Base64.getEncoder().encodeToString(request.toByteArray());
+
+    LOG.debug("Base64 encoding:\n{}--> {}", request.toString(), base64);
+    return base64;
   }
 }

@@ -1,0 +1,34 @@
+syntax="proto3";
+package eos.console;
+
+option java_package = "org.cern.eos.cdmi.protobuf.generated";
+option java_outer_classname = "QoSCmd";
+
+message QoSProto {
+  message IdentifierProto {
+    oneof Identifier {
+      uint64 FileId = 1;
+      string Path = 2;
+    }
+  }
+
+  message ListProto {
+    string classname = 1;
+  }
+
+  message GetProto {
+    IdentifierProto identifier = 1;
+    repeated string key = 2;
+  }
+
+  message SetProto {
+    IdentifierProto identifier = 1;
+    string classname = 2;
+  }
+
+  oneof subcmd {
+    ListProto list = 1;
+    GetProto get = 2;
+    SetProto set = 3;
+  }
+}

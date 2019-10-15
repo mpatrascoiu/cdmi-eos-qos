@@ -1,0 +1,30 @@
+syntax="proto3";
+package eos.console;
+
+option java_package = "org.cern.eos.cdmi.protobuf.generated";
+option java_outer_classname = "Request";
+
+import "QoS.proto";
+
+//------------------------------------------------------------------------------
+// Request message sent to the server
+//------------------------------------------------------------------------------
+message RequestProto {
+  // Types of output format supported
+  enum FormatType {
+    DEFAULT = 0;
+    JSON    = 1;
+    HTTP    = 2;
+    FUSE    = 3;
+  }
+
+  FormatType format = 1;
+
+  // Actual request data object
+  oneof command {
+    QoSProto qos = 20;
+  }
+
+  string Comment = 30;
+  bool DontColor = 31; // True if the output fd is not a tty.
+}
