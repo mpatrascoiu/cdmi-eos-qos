@@ -24,6 +24,7 @@
 package org.cern.eos.cdmi.util;
 
 import org.cern.eos.cdmi.EosStorageBackend;
+import org.indigo.cdmi.BackEndException;
 import org.indigo.cdmi.BackendCapability;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -48,14 +49,33 @@ public class EOSParseUtils {
 
   /**
    * Given the full response of an EOS command, attempt to extract the output.
+   * If an error message is encountered, execution is aborted.
+   *
    * An EOS command response follows the following format:
    *   mgm.proc.stdout=#output#
    *   &mgm.proc.stderr=#errors#
    *   &mgm.proc.retc=#retc#
    */
-  public static String extractCmdOutput(String cmdResponse) throws IOException {
+  public static String extractCmdOutput(String cmdResponse) throws BackEndException {
     LOG.debug("Extracting output from command response: {}", cmdResponse);
     int pos;
+
+    // Search if there are error messages
+    if ((pos = cmdResponse.indexOf("mgm.proc.stderr=")) != -1) {
+      int startPos = pos + 16;
+
+      // Find the end of the error substring
+      if ((pos = cmdResponse.indexOf("&", startPos)) == -1) {
+        pos = cmdResponse.length();
+      }
+
+      String errorMessage = cmdResponse.substring(startPos, pos);
+
+      if (!errorMessage.isEmpty()) {
+        throw new BackEndException(
+            String.format("Server responded with error message -- %s", errorMessage));
+      }
+    }
 
     // Find the beginning of the output substring
     if ((pos = cmdResponse.indexOf("mgm.proc.stdout=")) != -1) {

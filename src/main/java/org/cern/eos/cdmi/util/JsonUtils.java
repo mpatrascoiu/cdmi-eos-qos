@@ -25,6 +25,7 @@ package org.cern.eos.cdmi.util;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.indigo.cdmi.BackEndException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,7 +46,8 @@ public class JsonUtils {
   /**
    * Return HTTP response as JSON object.
    */
-  public static JSONObject responseToJson(HttpResponse response) throws IOException, JSONException {
+  public static JSONObject responseToJson(HttpResponse response) throws IOException,
+      JSONException, BackEndException {
     String cmdResponse = EntityUtils.toString(response.getEntity());
     String cmdOut = EOSParseUtils.extractCmdOutput(cmdResponse);
     LOG.debug("Attempting response conversion as JSON object: {}", cmdOut);
