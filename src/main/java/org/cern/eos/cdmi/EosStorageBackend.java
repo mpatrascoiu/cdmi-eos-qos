@@ -56,9 +56,9 @@ import static org.indigo.cdmi.BackendCapability.CapabilityType.DATAOBJECT;
  */
 public class EosStorageBackend implements StorageBackend {
 
-  public static final String cmdPath = "/proc/user/";
   public static final HashMap<String, Object> capabilities = new HashMap<>();
   private static final Logger LOG = LoggerFactory.getLogger(EosStorageBackend.class);
+  private static final String cmdPath = "/proc/user/";
 
   static {
     capabilities.put("cdmi_data_redundancy", "true");
@@ -67,19 +67,17 @@ public class EosStorageBackend implements StorageBackend {
     capabilities.put("cdmi_latency", "true");
   }
 
-  private PluginConfig config;
   private String eosServer;
-  private String scheme;
 
   public EosStorageBackend() {
-    config = new PluginConfig();
+    PluginConfig config = new PluginConfig();
 
     // Fail early if preconditions are not met
     config.throwIfNull("eos.server");
     config.throwIfNull("eos.server.port");
     config.throwIfNull("eos.server.scheme");
 
-    scheme = config.get("eos.server.scheme");
+    String scheme = config.get("eos.server.scheme");
     eosServer = scheme + "://" + config.get("eos.server") + ":" + config.get("eos.server.port");
   }
 
@@ -112,6 +110,13 @@ public class EosStorageBackend implements StorageBackend {
           backendCapabilities.add(backendCapability);
           LOG.info("{} capability: {}", EOSParseUtils.capabilityTypeToString(type), backendCapability);
         }
+      }
+
+      // Add Empty capability
+      for (BackendCapability.CapabilityType type : types) {
+        BackendCapability emptyCapability = emptyBackendCapability(type);
+        backendCapabilities.add(emptyCapability);
+        LOG.info("{} capability: {}", EOSParseUtils.capabilityTypeToString(type), emptyCapability);
       }
 
       return backendCapabilities;
@@ -175,12 +180,13 @@ public class EosStorageBackend implements StorageBackend {
       // Extract current_qos, target_qos and monitored metadata
       final Map<String, Object> monitored = EOSParseUtils.metadataFromQoSJson(qosGet);
       String currentClass = qosGet.getString("current_qos");
-      String currentCapUri = null;
-      String targetCapUri = null;
+      String currentCapUri, targetCapUri = null;
 
-      if (!currentClass.equals("null")) {
-        currentCapUri = "/cdmi_capabilities/dataobject/" + currentClass;
+      if (currentClass.equals("null")) {
+        currentClass = "empty";
       }
+
+      currentCapUri = "/cdmi_capabilities/dataobject/" + currentClass;
 
       if (qosGet.has("target_qos")) {
         targetCapUri = "/cdmi_capabilities/dataobject/" + qosGet.getString("target_qos");
@@ -216,5 +222,16 @@ public class EosStorageBackend implements StorageBackend {
   private String buildFileinfoCommandUrl(String path) throws UnsupportedEncodingException {
     String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
     return eosServer + cmdPath + "?mgm.cmd=fileinfo&mgm.path=" + encodedPath + "&mgm.format=json";
+  }
+
+  /**
+   * Return an empty BackendCapability corresponding to a file with no QoS class.
+   */
+  private BackendCapability emptyBackendCapability(BackendCapability.CapabilityType type) {
+    BackendCapability emptyCapability = new BackendCapability("empty", type);
+    emptyCapability.setMetadata(new HashMap<>());
+    emptyCapability.setCapabilities(EosStorageBackend.capabilities);
+
+    return emptyCapability;
   }
 }
