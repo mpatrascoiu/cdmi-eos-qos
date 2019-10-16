@@ -52,25 +52,12 @@ public class JsonUtils {
     String cmdOut = EOSParseUtils.extractCmdOutput(cmdResponse);
     LOG.debug("Attempting response conversion as JSON object: {}", cmdOut);
 
-    JSONObject jsonObject;
-
     try {
-      jsonObject = new JSONObject(cmdOut);
+      return new JSONObject(cmdOut);
     } catch (JSONException objectE) {
       LOG.debug("Failed conversion to JSON object.");
-
-      try {
-        LOG.debug("Attempting response conversion as JSON Array: {}", cmdOut);
-        JSONArray jsonArray = new JSONArray(cmdOut);
-        jsonObject = new JSONObject();
-        jsonObject.put("name", jsonArray);
-      } catch (JSONException arrayE) {
-        LOG.error("Failed conversion from out to JSON Object or Array: {}", cmdOut);
-        throw objectE;
-      }
+      throw objectE;
     }
-
-    return jsonObject;
   }
 
   /**
