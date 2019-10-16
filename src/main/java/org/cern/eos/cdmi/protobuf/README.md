@@ -37,10 +37,11 @@ Compiling the Protobuf objects
 To be able to use the data abstractions provided by the Protobuf library,
 the proto object definitions must be compiled. 
 
-To do this, execute the following command: 
+This will be done by Maven, before the build phase.
+However, to run it manually, execute the following command: 
  
 ```
-protoc3 --proto_path=$PRJ_DIR/src/main/java/org/cern/eos/cdmi/protobuf/proto/ --java_out=$PRJ_DIR/src/main/java/ $PRJ_DIR/src/main/java/org/cern/eos/cdmi/protobuf/proto/*.proto
+protoc3 --proto_path=$PRJ_DIR/src/main/proto --java_out=$PRJ_DIR/src/main/java $PRJ_DIR/src/main/proto/*.proto
 ```
 
 The compiled Protobuf classes will be generated according to the specified `java_package` setting.  
