@@ -98,16 +98,8 @@ public class EOSParseUtils {
    */
   public static BackendCapability backendCapabilityFromJson(JSONObject response,
                                                             BackendCapability.CapabilityType type) {
-    Map<String, Object> metadata = new HashMap<>();
     JSONObject jsonMetadata = response.getJSONObject("metadata");
-
-    Integer cdmiRedundancy = jsonMetadata.getInt("cdmi_data_redundancy_provided");
-    Integer cdmiLatency = jsonMetadata.getInt("cdmi_latency_provided");
-    JSONArray cdmiGeoPlacement = jsonMetadata.getJSONArray("cdmi_geographic_placement_provided");
-
-    metadata.put("cdmi_data_redundancy", cdmiRedundancy);
-    metadata.put("cdmi_latency", cdmiLatency);
-    metadata.put("cdmi_geographic_placement", cdmiGeoPlacement);
+    Map<String, Object> metadata = metadataFromQoSJson(response, "");
 
     try {
       List<String> transition = JsonUtils.jsonArrayToStringList(response.getJSONArray("transition"));
@@ -128,19 +120,21 @@ public class EOSParseUtils {
    * The QoS description may be either for a class or for an entry.
    *
    * @param response the JSON response representing a QoS description
+   * @param suffix the suffix to append to the metadata key
    * @return metadata the metadata JSON object
    */
-  public static Map<String, Object> metadataFromQoSJson(JSONObject response) {
+  public static Map<String, Object> metadataFromQoSJson(JSONObject response,
+                                                        String suffix) {
     Map<String, Object> metadata = new HashMap<>();
     JSONObject jsonMetadata = response.getJSONObject("metadata");
 
     Integer cdmiRedundancy = jsonMetadata.getInt("cdmi_data_redundancy_provided");
     Integer cdmiLatency = jsonMetadata.getInt("cdmi_latency_provided");
-    String cdmiGeoPlacement = jsonMetadata.getString("cdmi_geographic_placement_provided");
+    JSONArray cdmiGeoPlacement = jsonMetadata.getJSONArray("cdmi_geographic_placement_provided");
 
-    metadata.put("cdmi_data_redundancy_provided", cdmiRedundancy);
-    metadata.put("cdmi_latency_provided", cdmiLatency);
-    metadata.put("cdmi_geographic_placement_provided", cdmiGeoPlacement);
+    metadata.put("cdmi_data_redundancy" + suffix, cdmiRedundancy);
+    metadata.put("cdmi_latency" + suffix, cdmiLatency);
+    metadata.put("cdmi_geographic_placement" + suffix, cdmiGeoPlacement);
 
     return metadata;
   }

@@ -178,7 +178,7 @@ public class EosStorageBackend implements StorageBackend {
       JSONObject qosGet = HttpUtils.executeCommand(url);
 
       // Extract current_qos, target_qos and monitored metadata
-      final Map<String, Object> monitored = EOSParseUtils.metadataFromQoSJson(qosGet);
+      final Map<String, Object> monitored = EOSParseUtils.metadataFromQoSJson(qosGet, "_provided");
       String currentClass = qosGet.getString("current_qos");
       String currentCapUri, targetCapUri = null;
 
