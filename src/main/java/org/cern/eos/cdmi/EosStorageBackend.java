@@ -169,9 +169,13 @@ public class EosStorageBackend implements StorageBackend {
       url = buildFileinfoCommandUrl(path);
       JSONObject fileinfo = HttpUtils.executeCommand(url);
 
-      if (EOSParseUtils.fileinfoIsDirectory(fileinfo)) {
-        throw new BackEndException("Is directory");
-      }
+      // Identify capability type
+      BackendCapability.CapabilityType capType =
+          EOSParseUtils.fileinfoIsDirectory(fileinfo) ? CONTAINER : DATAOBJECT;
+      String capTypeString = EOSParseUtils.capabilityTypeToString(capType);
+
+      // Extract children list
+      final List<String> children = EOSParseUtils.childrenFromFileinfoJSON(fileinfo);
 
       // Perform "qos get" on path
       url = buildProtoCommandUrl(ProtobufUtils.QoSGet(path));
@@ -186,13 +190,15 @@ public class EosStorageBackend implements StorageBackend {
         currentClass = "empty";
       }
 
-      currentCapUri = "/cdmi_capabilities/dataobject/" + currentClass;
+      currentCapUri = "/cdmi_capabilities/" + capTypeString + "/" + currentClass;
 
       if (qosGet.has("target_qos")) {
-        targetCapUri = "/cdmi_capabilities/dataobject/" + qosGet.getString("target_qos");
+        targetCapUri = "/cdmi_capabilities/" + capTypeString + "/" + qosGet.getString("target_qos");
       }
 
       CdmiObjectStatus status = new CdmiObjectStatus(monitored, currentCapUri, targetCapUri);
+      status.setChildren(children);
+
       LOG.info("CDMI Capability of {}: {} {} -- {}", path, currentCapUri,
           ((targetCapUri == null || targetCapUri.isEmpty()) ?
               "[no transition]" :

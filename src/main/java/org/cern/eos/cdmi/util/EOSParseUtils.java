@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 
 import static org.indigo.cdmi.BackendCapability.CapabilityType.CONTAINER;
@@ -142,6 +143,33 @@ public class EOSParseUtils {
     }
 
     return metadata;
+  }
+
+  /**
+   * Extract the list of children from a JSON Fileinfo response.
+   *
+   * @param fileinfo the JSON fileinfo response
+   * @return list of children
+   */
+  public static List<String> childrenFromFileinfoJSON(JSONObject fileinfo) {
+    List<String> children = new LinkedList<>();
+
+    if (!fileinfoIsDirectory(fileinfo)) {
+      return children;
+    }
+
+    try {
+       JSONArray childrenJSON = fileinfo.getJSONArray("children");
+
+       for (int i = 0; i < childrenJSON.length(); i++) {
+         children.add(childrenJSON.getJSONObject(i).getString("name"));
+       }
+    } catch (JSONException ignore) {
+      LOG.debug("Failed to retrieve children information. Return empty list.");
+      children = Collections.emptyList();
+    }
+
+    return children;
   }
 
   /**
