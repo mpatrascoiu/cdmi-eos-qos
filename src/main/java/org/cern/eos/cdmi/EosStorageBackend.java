@@ -44,6 +44,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.indigo.cdmi.BackendCapability.CapabilityType.CONTAINER;
 import static org.indigo.cdmi.BackendCapability.CapabilityType.DATAOBJECT;
@@ -236,7 +238,10 @@ public class EosStorageBackend implements StorageBackend {
   private BackendCapability emptyBackendCapability(BackendCapability.CapabilityType type) {
     BackendCapability emptyCapability = new BackendCapability("empty", type);
     emptyCapability.setMetadata(new HashMap<>());
-    emptyCapability.setCapabilities(EosStorageBackend.capabilities);
+    emptyCapability.setCapabilities(Stream.of(
+        new String[][]{
+            {"cdmi_capabilities_allowed", "true"}
+        }).collect(Collectors.toMap(data -> data[0], data -> data[1])));
 
     return emptyCapability;
   }
