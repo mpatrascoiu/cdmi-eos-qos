@@ -32,7 +32,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +98,6 @@ public class EOSParseUtils {
    */
   public static BackendCapability backendCapabilityFromJson(JSONObject response,
                                                             BackendCapability.CapabilityType type) {
-    JSONObject jsonMetadata = response.getJSONObject("metadata");
     Map<String, Object> metadata = metadataFromQoSJson(response, "");
 
     try {
@@ -126,15 +125,21 @@ public class EOSParseUtils {
   public static Map<String, Object> metadataFromQoSJson(JSONObject response,
                                                         String suffix) {
     Map<String, Object> metadata = new HashMap<>();
-    JSONObject jsonMetadata = response.getJSONObject("metadata");
 
-    Integer cdmiRedundancy = jsonMetadata.getInt("cdmi_data_redundancy_provided");
-    Integer cdmiLatency = jsonMetadata.getInt("cdmi_latency_provided");
-    JSONArray cdmiGeoPlacement = jsonMetadata.getJSONArray("cdmi_geographic_placement_provided");
+    try {
+      JSONObject jsonMetadata = response.getJSONObject("metadata");
 
-    metadata.put("cdmi_data_redundancy" + suffix, cdmiRedundancy);
-    metadata.put("cdmi_latency" + suffix, cdmiLatency);
-    metadata.put("cdmi_geographic_placement" + suffix, cdmiGeoPlacement);
+      Integer cdmiRedundancy = jsonMetadata.getInt("cdmi_data_redundancy_provided");
+      Integer cdmiLatency = jsonMetadata.getInt("cdmi_latency_provided");
+      JSONArray cdmiGeoPlacement = jsonMetadata.getJSONArray("cdmi_geographic_placement_provided");
+
+      metadata.put("cdmi_data_redundancy" + suffix, cdmiRedundancy);
+      metadata.put("cdmi_latency" + suffix, cdmiLatency);
+      metadata.put("cdmi_geographic_placement" + suffix, cdmiGeoPlacement);
+    } catch (JSONException ignore) {
+      LOG.debug("Failed to retrieve metadata. Returning empty map.");
+      metadata = Collections.emptyMap();
+    }
 
     return metadata;
   }
