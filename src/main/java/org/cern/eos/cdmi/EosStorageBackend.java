@@ -32,6 +32,7 @@ import org.indigo.cdmi.BackendCapability;
 import org.indigo.cdmi.CdmiObjectStatus;
 import org.indigo.cdmi.spi.StorageBackend;
 import org.cern.eos.cdmi.util.PluginConfig;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -114,13 +115,15 @@ public class EosStorageBackend implements StorageBackend {
         }
       }
 
-      // Add Empty capability
+      // Add empty capabilities
+      List<BackendCapability> emptyCapabilities = new ArrayList<>();
       for (BackendCapability.CapabilityType type : types) {
-        BackendCapability emptyCapability = emptyBackendCapability(type);
-        backendCapabilities.add(emptyCapability);
+        BackendCapability emptyCapability = emptyBackendCapability(type, backendCapabilities);
+        emptyCapabilities.add(emptyCapability);
         LOG.info("{} capability: {}", EOSParseUtils.capabilityTypeToString(type), emptyCapability);
       }
 
+      backendCapabilities.addAll(emptyCapabilities);
       return backendCapabilities;
     } catch (JSONException | BackEndException | UnsupportedEncodingException e) {
       LOG.error("Error fetching CDMI capabilities -- {}", e.getMessage());
@@ -234,10 +237,27 @@ public class EosStorageBackend implements StorageBackend {
 
   /**
    * Return an empty BackendCapability corresponding to a file with no QoS class.
+   * An empty capability can transition to all other capabilities of the same type.
+   *
+   * @param type the capability type
+   * @param capabilities list of existing system capabilities
    */
-  private BackendCapability emptyBackendCapability(BackendCapability.CapabilityType type) {
+  private BackendCapability emptyBackendCapability(BackendCapability.CapabilityType type,
+                                                   List<BackendCapability> capabilities) {
     BackendCapability emptyCapability = new BackendCapability("empty", type);
-    emptyCapability.setMetadata(new HashMap<>());
+    Map<String, Object> metadata = new HashMap<>();
+    JSONArray capAllowed = new JSONArray();
+
+    for (BackendCapability capability : capabilities) {
+      if (capability.getType() == type) {
+        capAllowed.put("/cdmi_capabilities/"
+            + EOSParseUtils.capabilityTypeToString(type) + "/"
+            + capability.getName() + "/");
+      }
+    }
+
+    metadata.put("cdmi_capabilities_allowed", capAllowed);
+    emptyCapability.setMetadata(metadata);
     emptyCapability.setCapabilities(Stream.of(
         new String[][]{
             {"cdmi_capabilities_allowed", "true"}
