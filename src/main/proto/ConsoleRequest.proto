@@ -22,7 +22,7 @@ message RequestProto {
 
   // Actual request data object
   oneof command {
-    QoSProto qos = 20;
+    QoSProto qos = 21;
   }
 
   string Comment = 30;
